@@ -1,25 +1,91 @@
-import React from 'react';
-import logo from './logo.svg';
+import React,{useEffect, useState} from 'react';
 import './App.css';
+import Form from './components/Form';
+import Main from './components/Main';
+import PrivateRoute from './components/PrivateRoute';
+import fire from './fire'
+import {BrowserRouter as Router, Route} from 'react-router-dom';
 
 function App() {
+  const [user, setUser] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [hasAcc, setHasAcc] = useState(true);
+  
+  useEffect(() =>{
+    AuthListener();
+  })
+
+  const signUpHandle = (e) =>{
+    e.preventDefault();
+    console.log('suc');
+    fire.auth().createUserWithEmailAndPassword(email, password)
+    .then(cred => {
+      console.log(cred.user);
+      setEmail('');
+      setPassword('');
+    })
+  }
+
+  
+
+  const logInHandle = (e) =>{
+    e.preventDefault();
+    fire.auth()
+    .signInWithEmailAndPassword(email, password)
+    .then(cred => {
+      console.log(cred.user);
+      console.log('logged In');
+      setEmail('');
+      setPassword('');
+
+    })
+  }
+
+  const AuthListener = () =>{
+    fire.auth().onAuthStateChanged(user =>{
+      if(user){
+        setUser(user);
+      }else{
+        setUser('')
+      }
+    })
+  }
+
+  const hasAccHandle = () =>{
+    setHasAcc(!hasAcc);
+  }
   return (
+    <Router>
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <PrivateRoute path='/' user={user} component={Main} />
+      <Route exact path='/login'>
+          <Form hasAcc={hasAcc}
+                      email={email}
+                      password={password}
+                      setEmail={setEmail}
+                      setPassword={setPassword}
+                      signUpHandle={signUpHandle}
+                      logInHandle={logInHandle}
+                      hasAccHandle={hasAccHandle}/>
+      </Route>
+      {/* {
+        !user && <Form hasAcc={hasAcc}
+                  email={email}
+                  password={password}
+                  setEmail={setEmail}
+                  setPassword={setPassword}
+                  signUpHandle={signUpHandle}
+                  logInHandle={logInHandle}
+                  hasAccHandle={hasAccHandle}
+                  />
+      }
+      {
+        user && <Main logOutHandle={logOutHandle}/>
+      } */}
     </div>
+    </Router>
+
   );
 }
 
